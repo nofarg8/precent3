@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>גלגל הצורות! - תכונות מצולעים</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap');
+        body {
+            font-family: 'Rubik', sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        #game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a4a4a;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #007bff;
+            font-size: 1.8em;
+        }
+        #shapes-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .shape {
+            width: 120px;
+            height: 120px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .shape:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0,123,255,0.5);
+        }
+        .shape.selected {
+            background-color: #e6f2ff;
+            border-color: #0056b3;
+        }
+        .shape.correct {
+            border-color: #28a745;
+            box-shadow: 0 0 15px rgba(40,167,69,0.5);
+        }
+        .shape.incorrect {
+            border-color: #dc3545;
+            box-shadow: 0 0 15px rgba(220,53,69,0.5);
+        }
+        .shape-name {
+            margin-top: 5px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .shape.correct .shape-name {
+            opacity: 1;
+        }
+        #current-shape {
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #4a4a4a;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #wheel {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 10px solid #007bff;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+            transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            box-shadow: 0 0 20px rgba(0,123,255,0.3);
+        }
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            left: 50%;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>גלגל הצורות! - תכונות מצולעים</h1>
+        <h2>🎉חינוך מתמטי חוויתי עם נופר🎉</h2>
+        <div id="wheel"></div>
+        <button id="spin-wheel">סובבו את הגלגל</button>
+        <div id="current-shape"></div>
+        <div id="shapes-container"></div>
+        <button id="check">בדקו תשובות</button>
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        const shapes = [
+            { 
+                name: 'ריבוע', 
+                svg: '<rect x="10" y="10" width="80" height="80" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['כל הצלעות שוות', 'כל הזוויות שוות ל-90°', 'אלכסונים שווים זה לזה, חוצים זה את זה, ומאונכים זה לזה']
+            },
+            { 
+                name: 'מלבן', 
+                svg: '<rect x="10" y="20" width="100" height="60" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['כל זוג צלעות נגדיות מקבילות ושוות', 'כל הזוויות שוות ל-90°', 'אלכסונים שווים זה לזה וחוצים זה את זה']
+            },
+            { 
+                name: 'מעוין', 
+                svg: '<polygon points="60,10 110,60 60,110 10,60" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['כל הצלעות שוות', 'זוויות נגדיות שוות, זוויות סמוכות משלימות ל-180°', 'אלכסונים מאונכים זה לזה וחוצים זה את זה']
+            },
+            { 
+                name: 'מקבילית', 
+                svg: '<polygon points="20,30 100,30 80,90 0,90" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['כל זוג צלעות נגדיות מקבילות ושוות', 'זוויות נגדיות שוות, זוויות סמוכות משלימות ל-180°', 'אלכסונים חוצים זה את זה']
+            },
+            { 
+                name: 'טרפז', 
+                svg: '<polygon points="20,20 100,20 80,80 40,80" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['זוג אחד של צלעות נגדיות מקבילות (בסיסים)', 'סכום זוויות שווה ל-360°', 'זוויות סמוכות על אותה שוק משלימות ל-180°']
+            },
+            { 
+                name: 'טרפז שווה-שוקיים', 
+                svg: '<polygon points="30,20 90,20 110,80 10,80" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['בסיסים מקבילים, שוקיים שוות', 'זוויות בסיס שוות', 'זוויות סמוכות על אותה שוק משלימות ל-180°']
+            },
+            { 
+                name: 'טרפז ישר זווית', 
+                svg: '<polygon points="10,20 110,20 110,80 40,80" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['זוג אחד של צלעות מקבילות (בסיסים)', 'שתי זוויות ישרות']
+            },
+            { 
+                name: 'דלתון', 
+                svg: '<polygon points="60,10 90,50 60,110 30,50" fill="none" stroke="black" stroke-width="2" />',
+                properties: ['2 זוגות של צלעות סמוכות שוות', 'זוויות הבסיס שוות', 'אלכסונים מאונכים זה לזה, אלכסון ראשי חוצה את האלכסון המשני']
+            }
+        ];
+
+        const correctAnswersMapping = {
+            'ריבוע': ['ריבוע', 'מלבן', 'מעוין', 'מקבילית', 'דלתון', 'טרפז שווה-שוקיים', 'טרפז ישר זווית', 'טרפז'],
+            'מלבן': ['מלבן', 'מקבילית', 'טרפז ישר זווית'],
+            'מעוין': ['מעוין', 'מקבילית', 'דלתון'],
+            'מקבילית': ['מקבילית', 'ריבוע', 'מעוין'],
+            'טרפז שווה-שוקיים': ['טרפז שווה-שוקיים', 'טרפז'],
+            'טרפז ישר זווית': ['טרפז ישר זווית', 'טרפז'],
+            'טרפז': ['טרפז', 'טרפז שווה-שוקיים', 'טרפז ישר זווית'],
+            'דלתון': ['דלתון'],
+        };
+
+        function getValidShapes(shape) {
+            let validShapes = [shape];
+            if (correctAnswersMapping[shape]) {
+                validShapes = [...new Set([...validShapes, ...correctAnswersMapping[shape]])];
+            }
+            // מקרה מיוחד למעוין שהוא גם ריבוע
+            if (shape === 'ריבוע' || shape === 'מלבן') {
+                validShapes.push('מעוין');
+            }
+            return validShapes;
+        }
+
+        let currentShape;
+        let playerShapes;
+
+        function startNewRound() {
+            currentShape = shapes[Math.floor(Math.random() * shapes.length)];
+            document.getElementById('current-shape').innerHTML = `
+                <h2>זהו את כל הצורות שמתאימות ל: ${currentShape.name}</h2>
+                <ul style="text-align: right; list-style-type: none;">
+                    ${currentShape.properties.map(prop => `<li>• ${prop}</li>`).join('')}
+                </ul>
+            `;
+            playerShapes = getRandomShapes();
+            displayShapes();
+            document.getElementById('feedback').innerHTML = '';
+            document.getElementById('check').style.display = 'inline-block';
+            document.getElementById('spin-wheel').style.display = 'none';
+        }
+
+        function getRandomShapes() {
+            const validShapes = getValidShapes(currentShape.name);
+            const otherShapes = shapes.filter(shape => !validShapes.includes(shape.name));
+            const selectedValidShapes = validShapes.map(name => shapes.find(s => s.name === name));
+            const selectedOtherShapes = otherShapes.sort(() => 0.5 - Math.random()).slice(0, 8 - selectedValidShapes.length);
+            return [...selectedValidShapes, ...selectedOtherShapes].sort(() => 0.5 - Math.random());
+        }
+
+        function displayShapes() {
+            const container = document.getElementById('shapes-container');
+            container.innerHTML = '';
+            playerShapes.forEach((shape, index) => {
+                const div = document.createElement('div');
+                div.className = 'shape fade-in';
+                div.innerHTML = `
+                    <svg viewBox="0 0 120 120" width="100" height="100">${shape.svg}</svg>
+                    <div class="shape-name">${shape.name}</div>
+                `;
+                div.onclick = () => toggleSelection(div);
+                div.dataset.shape = shape.name;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleSelection(div) {
+            div.classList.toggle('selected');
+        }
+
+        function createWheel() {
+    const wheel = document.getElementById('wheel');
+    wheel.innerHTML = '';
+    shapes.forEach((shape, index) => {
+        const section = document.createElement('div');
+        section.className = 'wheel-section';
+        section.style.transform = `rotate(${index * (360 / shapes.length)}deg)`;
+        section.style.backgroundColor = `hsl(${index * (360 / shapes.length)}, 70%, 50%)`;
+        section.innerHTML = `<svg viewBox="0 0 120 120" width="50" height="50">${shape.svg}</svg>`;
+        wheel.appendChild(section);
+    });
+}
+
+function spinWheel() {
+    const wheel = document.getElementById('wheel');
+    const rotation = 360 * 5 + Math.floor(Math.random() * 360);
+    wheel.style.transform = `rotate(${rotation}deg)`;
+    
+    setTimeout(() => {
+        startNewRound();
+    }, 5000);
+}
+
+function checkAnswers() {
+    const selectedShapes = Array.from(document.querySelectorAll('.shape.selected'))
+        .map(div => div.dataset.shape);
+    const validShapes = getValidShapes(currentShape.name);
+    const correctSelections = selectedShapes.filter(shape => validShapes.includes(shape));
+    const incorrectSelections = selectedShapes.filter(shape => !validShapes.includes(shape));
+    const missedSelections = validShapes.filter(shape => !selectedShapes.includes(shape));
+
+    document.querySelectorAll('.shape').forEach(div => {
+        div.classList.remove('correct', 'incorrect');
+        const shapeName = div.dataset.shape;
+        if (selectedShapes.includes(shapeName)) {
+            if (validShapes.includes(shapeName)) {
+                div.classList.add('correct');
+            } else {
+                div.classList.add('incorrect');
+            }
+        }
+    });
+
+    let feedback = '';
+    if (correctSelections.length === validShapes.length && incorrectSelections.length === 0) {
+        feedback = "כל הכבוד! מצאתם את כל הצורות הגיאומטריות המתאימות!<br>סובבו את גלגל הצורות לסיבוב נוסף!";
+        document.getElementById('spin-wheel').style.display = 'inline-block';
+        document.getElementById('check').style.display = 'none';
+    } else {
+        feedback = `בחרתם ${correctSelections.length} צורות נכונות מתוך ${validShapes.length}.<br>`;
+        if (incorrectSelections.length > 0) {
+            feedback += `יש ${incorrectSelections.length} צורות שגויות.<br>`;
+        }
+        if (missedSelections.length > 0) {
+            feedback += `נסו למצוא עוד ${missedSelections.length} צורות מתאימות.`;
+        }
+    }
+
+    document.getElementById('feedback').innerHTML = feedback;
+}
+
+document.getElementById('spin-wheel').onclick = spinWheel;
+document.getElementById('check').onclick = checkAnswers;
+
+createWheel();
+startNewRound();
+</script>
+</body>
+</html>
+
+
+    </script>
+</body>
+</html>
+
